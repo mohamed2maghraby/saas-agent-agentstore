@@ -1,0 +1,31 @@
+<?php
+
+return [
+    'title' => 'Connect this store to SaaS Agent',
+    'intro' => '":tenant" is asking to connect this store to its AI assistant.',
+    'platform' => 'Platform',
+    'tenant' => 'Business',
+    'access' => 'It will be able to',
+    'expires' => 'Request expires',
+    'no_capabilities' => 'Nothing yet — no store adapters are configured.',
+    'warning' => 'Approve only if you started this connection yourself from the SaaS Agent dashboard. You can disconnect at any time.',
+    'approve' => 'Approve',
+    'deny' => 'Cancel',
+    'approved' => 'Store connected.',
+    'approve_failed' => 'The platform did not accept the approval. Start the connection again from the dashboard.',
+    'not_found' => 'This connection request does not exist or has already been used.',
+    'expired' => 'This connection request has expired. Start again from the dashboard.',
+    'wrong_store' => 'This connection request was created for a different store address.',
+    'saas_unreachable' => 'The platform could not be reached. Try again in a moment.',
+    'capabilities' => [
+        'products.search' => 'Search your products',
+        'products.read' => 'Read product details',
+        'inventory.read' => 'Check stock',
+        'prices.read' => 'Read current prices',
+        'customers.verify' => 'Verify customers',
+        'orders.read' => 'Read a verified customer’s orders',
+        'orders.list' => 'List a verified customer’s orders',
+        'orders.create' => 'Place orders through your checkout',
+        'orders.cancel' => 'Cancel orders under your policy',
+    ],
+];
