@@ -63,7 +63,8 @@ final class DoctorCommand extends Command
         $this->components->twoColumnDetail('Capabilities', $supported ? implode(', ', $supported) : '<fg=yellow>none</>');
 
         $gate = (string) config('agentstore.approval.gate');
-        $this->check("Approval gate '{$gate}' is defined", Gate::has($gate), 'nobody can approve a connection until it is');
+        $defined = Gate::has($gate);
+        $this->check("Approval gate '{$gate}' is defined", $defined, $defined ? '' : 'nobody can approve a connection until it is');
 
         $connection = Connection::active();
         $this->components->twoColumnDetail('Connection', $connection
