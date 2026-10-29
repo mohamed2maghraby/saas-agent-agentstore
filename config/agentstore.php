@@ -37,8 +37,10 @@ return [
         'products' => null,           // Store\Adapters\ProductAdapterInterface        → products.search, products.read
         'inventory' => null,          // Store\Adapters\InventoryAdapterInterface      → inventory.read
         'pricing' => null,            // Store\Adapters\PricingAdapterInterface        → prices.read
+        'offers' => null,             // Store\Adapters\OfferAdapterInterface          → offers.list
         'customers' => null,          // Store\Adapters\CustomerAdapterInterface       → customers.verify
         'orders' => null,             // Store\Adapters\OrderAdapterInterface          → orders.read, orders.list
+        'order_quote' => null,        // Store\Adapters\OrderQuoteAdapterInterface     → orders.quote
         'order_placement' => null,    // Store\Adapters\OrderPlacementAdapterInterface → orders.create
         'order_cancellation' => null, // Store\Adapters\OrderCancellationAdapterInterface → orders.cancel
     ],

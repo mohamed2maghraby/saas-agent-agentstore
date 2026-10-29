@@ -12,9 +12,11 @@ enum Capability: string
     case ProductsRead = 'products.read';
     case InventoryRead = 'inventory.read';
     case PricesRead = 'prices.read';
+    case OffersList = 'offers.list';
     case CustomersVerify = 'customers.verify';
     case OrdersRead = 'orders.read';
     case OrdersList = 'orders.list';
+    case OrdersQuote = 'orders.quote';
     case OrdersCreate = 'orders.create';
     case OrdersCancel = 'orders.cancel';
 
@@ -33,8 +35,10 @@ enum Capability: string
             self::ProductsSearch, self::ProductsRead => 'products',
             self::InventoryRead => 'inventory',
             self::PricesRead => 'pricing',
+            self::OffersList => 'offers',
             self::CustomersVerify => 'customers',
             self::OrdersRead, self::OrdersList => 'orders',
+            self::OrdersQuote => 'order_quote',
             self::OrdersCreate => 'order_placement',
             self::OrdersCancel => 'order_cancellation',
         };

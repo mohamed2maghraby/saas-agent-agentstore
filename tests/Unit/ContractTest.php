@@ -5,6 +5,9 @@ namespace SaasAgent\AgentStore\Tests\Unit;
 use PHPUnit\Framework\TestCase;
 use SaasAgent\AgentStore\Contract\ContractException;
 use SaasAgent\AgentStore\Contract\Money;
+use SaasAgent\AgentStore\Contract\Offer;
+use SaasAgent\AgentStore\Contract\OrderQuote;
+use SaasAgent\AgentStore\Contract\OrderQuoteRequest;
 use SaasAgent\AgentStore\Contract\OrderStatus;
 use SaasAgent\AgentStore\Contract\Product;
 use SaasAgent\AgentStore\Contract\ProductQuery;
@@ -80,5 +83,46 @@ class ContractTest extends TestCase
         $this->assertGreaterThanOrEqual(43, strlen($credentials->requestSecret));
         $this->assertNotSame($credentials->requestSecret, $credentials->webhookSecret);
         $this->assertStringNotContainsString($credentials->requestSecret, print_r($credentials, true));
+    }
+
+    public function test_a_quote_and_an_offer_round_trip_through_json(): void
+    {
+        $quote = [
+            'lines' => [
+                ['variant_id' => 'v1', 'title' => 'Mug', 'quantity' => 2, 'total' => ['amount' => 50000, 'currency' => 'EGP'], 'list_total' => ['amount' => 59000, 'currency' => 'EGP'], 'gift' => false],
+                ['variant_id' => 'v9', 'title' => 'Card', 'quantity' => 1, 'total' => ['amount' => 0, 'currency' => 'EGP'], 'list_total' => null, 'gift' => true],
+            ],
+            'subtotal' => ['amount' => 50000, 'currency' => 'EGP'],
+            'discount' => null,
+            'delivery' => null,
+            'fees' => ['amount' => 1000, 'currency' => 'EGP'],
+            'total' => ['amount' => 51000, 'currency' => 'EGP'],
+            'delivery_estimate' => '2-5 days',
+            'offers' => ['Free shipping'],
+            'required_fields' => ['customer_email', 'address.area'],
+            'notes' => [],
+        ];
+        $offer = ['id' => 'o1', 'title' => 'Free shipping', 'description' => 'Over 500', 'ends_at' => '2026-10-31T23:59:59+02:00'];
+
+        $this->assertSame($quote, json_decode(json_encode(OrderQuote::fromArray($quote)->toArray()), true));
+        $this->assertSame($offer, Offer::fromArray($offer)->toArray());
+        $this->assertNull(OrderQuote::fromArray($quote)->delivery, 'unknown delivery stays unknown, not free');
+    }
+
+    public function test_a_quote_names_only_known_fields_and_has_lines(): void
+    {
+        $base = ['lines' => [['variant_id' => 'v1', 'title' => 'Mug', 'quantity' => 1, 'total' => ['amount' => 1, 'currency' => 'EGP']]], 'subtotal' => ['amount' => 1, 'currency' => 'EGP'], 'total' => ['amount' => 1, 'currency' => 'EGP']];
+
+        foreach ([['required_fields' => ['password']], ['lines' => []], ['notes' => [str_repeat('x', 501)]]] as $bad) {
+            try {
+                OrderQuote::fromArray(array_replace($base, $bad));
+                $this->fail('Accepted '.json_encode($bad));
+            } catch (ContractException) {
+                $this->addToAssertionCount(1);
+            }
+        }
+
+        $this->expectException(ContractException::class);
+        OrderQuoteRequest::fromArray(['items' => [], 'payment_method' => 'cod']);
     }
 }

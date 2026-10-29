@@ -60,8 +60,10 @@ and list them in `config/agentstore.php`:
 | `products` | `ProductAdapterInterface` | `products.search`, `products.read` |
 | `inventory` | `InventoryAdapterInterface` | `inventory.read` |
 | `pricing` | `PricingAdapterInterface` | `prices.read` |
+| `offers` | `OfferAdapterInterface` | `offers.list` |
 | `customers` | `CustomerAdapterInterface` | `customers.verify` |
 | `orders` | `OrderAdapterInterface` | `orders.read`, `orders.list` |
+| `order_quote` | `OrderQuoteAdapterInterface` | `orders.quote` — prices an order through your checkout without placing it |
 | `order_placement` | `OrderPlacementAdapterInterface` | `orders.create` |
 | `order_cancellation` | `OrderCancellationAdapterInterface` | `orders.cancel` |
 

@@ -7,12 +7,14 @@ use Illuminate\Http\Request;
 use SaasAgent\AgentStore\Contract\ContractException;
 use SaasAgent\AgentStore\Contract\CustomerVerification;
 use SaasAgent\AgentStore\Contract\ErrorCode;
+use SaasAgent\AgentStore\Contract\OrderQuoteRequest;
 use SaasAgent\AgentStore\Contract\OrderRequest;
 use SaasAgent\AgentStore\Contract\OrderStatus;
 use SaasAgent\AgentStore\Store\Adapters\CustomerAdapterInterface;
 use SaasAgent\AgentStore\Store\Adapters\OrderAdapterInterface;
 use SaasAgent\AgentStore\Store\Adapters\OrderCancellationAdapterInterface;
 use SaasAgent\AgentStore\Store\Adapters\OrderPlacementAdapterInterface;
+use SaasAgent\AgentStore\Store\Adapters\OrderQuoteAdapterInterface;
 use SaasAgent\AgentStore\Store\Capabilities;
 use SaasAgent\AgentStore\Store\CustomerToken;
 use SaasAgent\AgentStore\Store\Http\ApiError;
@@ -76,6 +78,16 @@ final class OrderController extends ApiController
             $orders = $this->orders()->forCustomer($this->customer($request, $body), $limit);
 
             return ['items' => array_map(fn (OrderStatus $o) => $o->toArray(), array_slice($orders, 0, $limit))];
+        });
+    }
+
+    /** What an order would cost. Writes nothing, so no idempotency key. */
+    public function quote(Request $request): JsonResponse
+    {
+        return $this->respond(function () use ($request) {
+            $quote = OrderQuoteRequest::fromArray($this->body($request));
+
+            return $this->capabilities->adapter('order_quote', OrderQuoteAdapterInterface::class)->quote($quote)->toArray();
         });
     }
 

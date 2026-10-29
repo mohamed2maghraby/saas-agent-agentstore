@@ -39,10 +39,12 @@ Route::prefix(config('agentstore.routes.prefix', 'agentstore'))->name('agentstor
         Route::get('products/{product}', [CatalogController::class, 'show'])->middleware('agentstore.capability:products.read')->name('products.show');
         Route::post('inventory', [CatalogController::class, 'stock'])->middleware('agentstore.capability:inventory.read')->name('inventory');
         Route::post('prices', [CatalogController::class, 'prices'])->middleware('agentstore.capability:prices.read')->name('prices');
+        Route::get('offers', [CatalogController::class, 'offers'])->middleware('agentstore.capability:offers.list')->name('offers');
 
         Route::post('customers/verify', [OrderController::class, 'verify'])->middleware('agentstore.capability:customers.verify')->name('customers.verify');
         Route::post('orders/lookup', [OrderController::class, 'lookup'])->middleware('agentstore.capability:orders.read')->name('orders.lookup');
         Route::post('orders/list', [OrderController::class, 'list'])->middleware('agentstore.capability:orders.list')->name('orders.list');
+        Route::post('orders/quote', [OrderController::class, 'quote'])->middleware('agentstore.capability:orders.quote')->name('orders.quote');
         Route::post('orders', [OrderController::class, 'place'])->middleware('agentstore.capability:orders.create')->name('orders.place');
         Route::post('orders/cancel', [OrderController::class, 'cancel'])->middleware('agentstore.capability:orders.cancel')->name('orders.cancel');
         Route::post('idempotency/lookup', [OrderController::class, 'idempotency'])->name('idempotency.lookup');

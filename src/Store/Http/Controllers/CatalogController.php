@@ -5,16 +5,18 @@ namespace SaasAgent\AgentStore\Store\Http\Controllers;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use SaasAgent\AgentStore\Contract\ErrorCode;
+use SaasAgent\AgentStore\Contract\Offer;
 use SaasAgent\AgentStore\Contract\Price;
 use SaasAgent\AgentStore\Contract\ProductQuery;
 use SaasAgent\AgentStore\Contract\StockLevel;
 use SaasAgent\AgentStore\Store\Adapters\InventoryAdapterInterface;
+use SaasAgent\AgentStore\Store\Adapters\OfferAdapterInterface;
 use SaasAgent\AgentStore\Store\Adapters\PricingAdapterInterface;
 use SaasAgent\AgentStore\Store\Adapters\ProductAdapterInterface;
 use SaasAgent\AgentStore\Store\Capabilities;
 use SaasAgent\AgentStore\Store\Http\ApiError;
 
-/** Products, stock and prices — read straight from the store, never cached here. */
+/** Products, stock, prices and offers — read straight from the store, never cached here. */
 final class CatalogController extends ApiController
 {
     public function __construct(private readonly Capabilities $capabilities) {}
@@ -64,6 +66,15 @@ final class CatalogController extends ApiController
                 ->prices($this->ids($this->body($request)));
 
             return ['items' => array_map(fn (Price $price) => $price->toArray(), $prices)];
+        });
+    }
+
+    public function offers(): JsonResponse
+    {
+        return $this->respond(function () {
+            $offers = $this->capabilities->adapter('offers', OfferAdapterInterface::class)->running();
+
+            return ['items' => array_map(fn (Offer $offer) => $offer->toArray(), array_slice($offers, 0, 50))];
         });
     }
 
