@@ -23,4 +23,15 @@ final class AgentStore
     {
         return app(Outbox::class)->publish($type, $payload);
     }
+
+    /**
+     * The address the SaaS knows this store by: `agentstore.store_url`
+     * (AGENTSTORE_STORE_URL) when set, otherwise APP_URL.
+     */
+    public static function storeUrl(): string
+    {
+        $configured = config('agentstore.store_url');
+
+        return rtrim(is_string($configured) && $configured !== '' ? $configured : (string) config('app.url'), '/');
+    }
 }

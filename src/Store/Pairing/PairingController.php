@@ -9,6 +9,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
+use SaasAgent\AgentStore\AgentStore;
 use SaasAgent\AgentStore\Contract\Capability;
 use SaasAgent\AgentStore\Contract\ContractVersion;
 use SaasAgent\AgentStore\Store\Capabilities;
@@ -68,7 +69,7 @@ final class PairingController
                 'capabilities' => $capabilities,
                 'store' => [
                     'name' => (string) config('app.name'),
-                    'url' => (string) config('app.url'),
+                    'url' => AgentStore::storeUrl(),
                     'contract_version' => ContractVersion::CURRENT,
                     'package_version' => ContractVersion::PACKAGE,
                 ],
@@ -116,14 +117,15 @@ final class PairingController
             return ['error' => __('agentstore::messages.saas_unreachable')];
         }
 
-        $expires = rescue(fn () => Carbon::parse((string) ($data['expires_at'] ?? '')), null, false);
+        // In this app's timezone: the column keeps no offset, and the SaaS may run in another zone.
+        $expires = rescue(fn () => Carbon::parse((string) ($data['expires_at'] ?? ''))->setTimezone(config('app.timezone')), null, false);
 
         if (! $expires || $expires->isPast()) {
             return ['error' => __('agentstore::messages.expired')];
         }
 
         // A pairing created for another store must not be approved here.
-        if (! $this->sameOrigin((string) ($data['store_url'] ?? ''), (string) config('app.url'))) {
+        if (! $this->sameOrigin((string) ($data['store_url'] ?? ''), AgentStore::storeUrl())) {
             return ['error' => __('agentstore::messages.wrong_store')];
         }
 

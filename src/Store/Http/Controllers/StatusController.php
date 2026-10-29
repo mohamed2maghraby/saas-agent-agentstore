@@ -4,6 +4,7 @@ namespace SaasAgent\AgentStore\Store\Http\Controllers;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
+use SaasAgent\AgentStore\AgentStore;
 use SaasAgent\AgentStore\Contract\Capability;
 use SaasAgent\AgentStore\Contract\ContractVersion;
 use SaasAgent\AgentStore\Store\Capabilities;
@@ -46,7 +47,7 @@ final class StatusController extends ApiController
             'capabilities' => array_map(fn (Capability $c) => $c->value, $capabilities->supported()),
             'store' => [
                 'name' => (string) config('app.name'),
-                'url' => (string) config('app.url'),
+                'url' => AgentStore::storeUrl(),
                 'timezone' => (string) config('app.timezone'),
             ],
         ]);

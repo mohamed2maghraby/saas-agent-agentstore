@@ -18,6 +18,14 @@ return [
     'saas_url' => env('AGENTSTORE_SAAS_URL'),
 
     /*
+     | This store's public address, as it was entered in the SaaS when
+     | connecting. Pairing requests for any other address are refused. Leave it
+     | unset to use APP_URL; set it when APP_URL is not the address the SaaS
+     | reaches — e.g. a local copy whose APP_URL still names production.
+     */
+    'store_url' => env('AGENTSTORE_STORE_URL'),
+
+    /*
      | One class per capability group. Leave a group null and the store reports
      | the matching capabilities as unsupported — the SaaS will not offer them.
      |

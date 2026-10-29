@@ -9,6 +9,7 @@ use SaasAgent\AgentStore\Security\Credentials;
 use SaasAgent\AgentStore\Security\Signature;
 use SaasAgent\AgentStore\Store\Models\Connection;
 use SaasAgent\AgentStore\Store\Models\Pairing;
+use SaasAgent\AgentStore\Tests\Fixtures\StoreA\CatalogAdapter;
 use SaasAgent\AgentStore\Tests\TestCase;
 
 /** The store side of ADR 0009. The SaaS is faked; the store is real. */
@@ -63,12 +64,16 @@ class PairingTest extends TestCase
 
     public function test_the_approval_page_shows_what_the_configured_saas_reports(): void
     {
+        config(['agentstore.adapters.products' => CatalogAdapter::class]);
         $this->fakeSaas();
 
         $this->asApprover()->get('/agentstore/connect?pairing='.self::PAIRING)
             ->assertOk()
             ->assertSee('Space Gift Shop')
-            ->assertSee('saas.test');
+            ->assertSee('saas.test')
+            // Capability names contain a dot; the label must still be found.
+            ->assertSee(__('agentstore::messages.capabilities')['products.search'])
+            ->assertDontSee('agentstore::messages');
 
         // Fetched from the configured SaaS — nothing else.
         Http::assertSent(fn ($request) => str_starts_with($request->url(), 'https://saas.test/'));
@@ -82,6 +87,41 @@ class PairingTest extends TestCase
         $this->asApprover()->post('/agentstore/connect', ['pairing' => self::PAIRING]);
 
         $this->assertSame(0, Pairing::query()->count());
+    }
+
+    public function test_the_store_can_be_known_by_an_address_other_than_app_url(): void
+    {
+        // A local copy whose APP_URL still names production.
+        config(['app.url' => 'https://production-shop.example', 'agentstore.store_url' => 'https://shop.test/']);
+        $this->fakeSaas();
+
+        $this->asApprover()->get('/agentstore/connect?pairing='.self::PAIRING)
+            ->assertOk()
+            ->assertDontSee(__('agentstore::messages.wrong_store'));
+
+        // And the other way round: with the override set, APP_URL no longer matches.
+        config(['agentstore.store_url' => 'https://elsewhere.test']);
+        $this->asApprover()->get('/agentstore/connect?pairing='.self::PAIRING)
+            ->assertSee(__('agentstore::messages.wrong_store'));
+    }
+
+    public function test_a_saas_in_another_timezone_does_not_expire_the_approval_early(): void
+    {
+        // The store runs on Cairo time; the SaaS sends its expiry in UTC.
+        $zone = date_default_timezone_get();
+        date_default_timezone_set('Africa/Cairo');
+        config(['app.timezone' => 'Africa/Cairo']);
+
+        try {
+            $this->fakeSaas(['expires_at' => now('UTC')->addMinutes(10)->toAtomString()]);
+            $this->asApprover()->post('/agentstore/connect', ['pairing' => self::PAIRING]);
+
+            $pairing = Pairing::query()->sole();
+            $this->assertTrue($pairing->isOpen(), 'The approval expired before it could be completed.');
+            $this->assertEqualsWithDelta(now()->addMinutes(10)->getTimestamp(), $pairing->expires_at->getTimestamp(), 60);
+        } finally {
+            date_default_timezone_set($zone);
+        }
     }
 
     public function test_an_expired_pairing_is_refused(): void

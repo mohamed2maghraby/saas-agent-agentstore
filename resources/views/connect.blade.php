@@ -46,7 +46,7 @@
                 @else
                     <ul>
                         @foreach ($capabilities as $capability)
-                            <li>{{ __('agentstore::messages.capabilities.'.$capability) }}</li>
+                            <li>{{ __('agentstore::messages.capabilities')[$capability] ?? $capability }}</li>
                         @endforeach
                     </ul>
                 @endif

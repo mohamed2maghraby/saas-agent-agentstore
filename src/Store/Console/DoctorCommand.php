@@ -6,6 +6,7 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Schema;
+use SaasAgent\AgentStore\AgentStore;
 use SaasAgent\AgentStore\Contract\Capability;
 use SaasAgent\AgentStore\Contract\ContractVersion;
 use SaasAgent\AgentStore\Store\Capabilities;
@@ -30,7 +31,12 @@ final class DoctorCommand extends Command
     {
         $this->components->info('SaaS Agent store integration · contract '.ContractVersion::CURRENT.' · package '.ContractVersion::PACKAGE);
 
-        $this->check('APP_URL is set', filled(config('app.url')) && parse_url((string) config('app.url'), PHP_URL_HOST) !== null);
+        $storeUrl = AgentStore::storeUrl();
+        $this->check(
+            filled(config('agentstore.store_url')) ? 'AGENTSTORE_STORE_URL is valid' : 'APP_URL is set',
+            $storeUrl !== '' && parse_url($storeUrl, PHP_URL_HOST) !== null,
+            $storeUrl,
+        );
 
         try {
             $base = $saas->base();

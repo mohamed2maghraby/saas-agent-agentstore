@@ -25,6 +25,17 @@ AGENTSTORE_SAAS_URL=https://your-saas-agent-address
 
 Pairing requests are fetched from that address and only from it.
 
+The SaaS knows the store by `APP_URL`. If that is not the address the SaaS
+reaches the store at — a local copy whose `APP_URL` still names production, or
+a store behind a different public host — set it explicitly:
+
+```dotenv
+AGENTSTORE_STORE_URL=https://shop.example.com
+```
+
+It must be exactly the address entered in SaaS Agent when connecting; a
+pairing request for any other address is refused.
+
 Decide who may approve a connection, e.g. in `AppServiceProvider::boot()`:
 
 ```php
