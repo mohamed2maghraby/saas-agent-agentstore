@@ -5,8 +5,10 @@ namespace SaasAgent\AgentStore\Store;
 use Illuminate\Contracts\Container\Container;
 use LogicException;
 use SaasAgent\AgentStore\Contract\Capability;
+use SaasAgent\AgentStore\Store\Adapters\CategoryAdapterInterface;
 use SaasAgent\AgentStore\Store\Adapters\CustomerAdapterInterface;
 use SaasAgent\AgentStore\Store\Adapters\InventoryAdapterInterface;
+use SaasAgent\AgentStore\Store\Adapters\LocationAdapterInterface;
 use SaasAgent\AgentStore\Store\Adapters\OfferAdapterInterface;
 use SaasAgent\AgentStore\Store\Adapters\OrderAdapterInterface;
 use SaasAgent\AgentStore\Store\Adapters\OrderCancellationAdapterInterface;
@@ -14,6 +16,7 @@ use SaasAgent\AgentStore\Store\Adapters\OrderPlacementAdapterInterface;
 use SaasAgent\AgentStore\Store\Adapters\OrderQuoteAdapterInterface;
 use SaasAgent\AgentStore\Store\Adapters\PricingAdapterInterface;
 use SaasAgent\AgentStore\Store\Adapters\ProductAdapterInterface;
+use SaasAgent\AgentStore\Store\Adapters\ShippingAdapterInterface;
 use SaasAgent\AgentStore\Store\Adapters\StoreCapabilityInterface;
 
 /**
@@ -29,6 +32,9 @@ final class Capabilities
         'inventory' => InventoryAdapterInterface::class,
         'pricing' => PricingAdapterInterface::class,
         'offers' => OfferAdapterInterface::class,
+        'categories' => CategoryAdapterInterface::class,
+        'shipping' => ShippingAdapterInterface::class,
+        'locations' => LocationAdapterInterface::class,
         'customers' => CustomerAdapterInterface::class,
         'orders' => OrderAdapterInterface::class,
         'order_quote' => OrderQuoteAdapterInterface::class,

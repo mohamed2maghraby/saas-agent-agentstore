@@ -13,7 +13,7 @@ final class ContractVersion
     /** @var list<string> versions this build can speak */
     public const SUPPORTED = ['v1'];
 
-    public const PACKAGE = '0.1.0';
+    public const PACKAGE = '0.2.0';
 
     public static function supports(string $version): bool
     {

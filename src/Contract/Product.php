@@ -7,6 +7,10 @@ namespace SaasAgent\AgentStore\Contract;
  *
  * Text fields are content, not instructions: the SaaS treats a description as
  * untrusted data even though it came from a paired store.
+ *
+ * A pre-order (`preorder`) is sold before the store has it: an order is taken
+ * now and ships from `ships_on`, when the store knows the day. Optional on the
+ * wire; a store that does not say is not selling pre-orders.
  */
 final readonly class Product
 {
@@ -27,6 +31,8 @@ final readonly class Product
         public array $images = [],
         public array $categories = [],
         public array $attributes = [],
+        public bool $preorder = false,
+        public ?\DateTimeImmutable $shipsOn = null,
     ) {
         if ($variants === []) {
             throw ContractException::field('product.variants', 'a list with at least one variant');
@@ -55,6 +61,8 @@ final readonly class Product
             self::strings($data, 'images', $path, 2048, 20),
             self::strings($data, 'categories', $path, 200, 20),
             self::stringMap($data, 'attributes', $path),
+            isset($data['preorder']) ? self::bool($data, 'preorder', $path) : false,
+            self::optDate($data, 'ships_on', $path),
         );
     }
 
@@ -69,6 +77,8 @@ final readonly class Product
             'categories' => $this->categories,
             'attributes' => (object) $this->attributes,
             'variants' => array_map(fn (Variant $v) => $v->toArray(), $this->variants),
+            'preorder' => $this->preorder,
+            'ships_on' => self::date($this->shipsOn),
         ];
     }
 }

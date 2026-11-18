@@ -150,6 +150,34 @@ trait Reads
         return $time;
     }
 
+    /**
+     * A calendar day, "YYYY-MM-DD" — when a product starts shipping.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    private static function optDate(array $data, string $key, string $path): ?\DateTimeImmutable
+    {
+        if (! isset($data[$key])) {
+            return null;
+        }
+
+        $value = $data[$key];
+        $date = is_string($value) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $value)
+            ? \DateTimeImmutable::createFromFormat('!Y-m-d', $value)
+            : false;
+
+        if ($date === false || $date->format('Y-m-d') !== $value) {
+            throw ContractException::field("{$path}.{$key}", 'a date, YYYY-MM-DD');
+        }
+
+        return $date;
+    }
+
+    private static function date(?\DateTimeInterface $date): ?string
+    {
+        return $date?->format('Y-m-d');
+    }
+
     private static function time(?\DateTimeInterface $time): ?string
     {
         return $time?->format(\DateTimeInterface::ATOM);

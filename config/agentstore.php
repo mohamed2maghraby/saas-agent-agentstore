@@ -38,6 +38,9 @@ return [
         'inventory' => null,          // Store\Adapters\InventoryAdapterInterface      → inventory.read
         'pricing' => null,            // Store\Adapters\PricingAdapterInterface        → prices.read
         'offers' => null,             // Store\Adapters\OfferAdapterInterface          → offers.list
+        'categories' => null,         // Store\Adapters\CategoryAdapterInterface       → categories.list
+        'shipping' => null,           // Store\Adapters\ShippingAdapterInterface       → shipping.estimate
+        'locations' => null,          // Store\Adapters\LocationAdapterInterface       → locations.list
         'customers' => null,          // Store\Adapters\CustomerAdapterInterface       → customers.verify
         'orders' => null,             // Store\Adapters\OrderAdapterInterface          → orders.read, orders.list
         'order_quote' => null,        // Store\Adapters\OrderQuoteAdapterInterface     → orders.quote

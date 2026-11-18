@@ -61,6 +61,9 @@ and list them in `config/agentstore.php`:
 | `inventory` | `InventoryAdapterInterface` | `inventory.read` |
 | `pricing` | `PricingAdapterInterface` | `prices.read` |
 | `offers` | `OfferAdapterInterface` | `offers.list` |
+| `categories` | `CategoryAdapterInterface` | `categories.list` — the categories your menu shows |
+| `shipping` | `ShippingAdapterInterface` | `shipping.estimate` — delivery to a city, before there is an order |
+| `locations` | `LocationAdapterInterface` | `locations.list` — branches and shops that sell your products |
 | `customers` | `CustomerAdapterInterface` | `customers.verify` |
 | `orders` | `OrderAdapterInterface` | `orders.read`, `orders.list` |
 | `order_quote` | `OrderQuoteAdapterInterface` | `orders.quote` — prices an order through your checkout without placing it |

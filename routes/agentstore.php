@@ -5,6 +5,7 @@ use SaasAgent\AgentStore\Store\Http\Controllers\CatalogController;
 use SaasAgent\AgentStore\Store\Http\Controllers\ConnectionController;
 use SaasAgent\AgentStore\Store\Http\Controllers\OrderController;
 use SaasAgent\AgentStore\Store\Http\Controllers\StatusController;
+use SaasAgent\AgentStore\Store\Http\Controllers\StoreInfoController;
 use SaasAgent\AgentStore\Store\Http\Middleware\RecordRequest;
 use SaasAgent\AgentStore\Store\Http\Middleware\VerifySignature;
 use SaasAgent\AgentStore\Store\Pairing\PairingController;
@@ -40,6 +41,9 @@ Route::prefix(config('agentstore.routes.prefix', 'agentstore'))->name('agentstor
         Route::post('inventory', [CatalogController::class, 'stock'])->middleware('agentstore.capability:inventory.read')->name('inventory');
         Route::post('prices', [CatalogController::class, 'prices'])->middleware('agentstore.capability:prices.read')->name('prices');
         Route::get('offers', [CatalogController::class, 'offers'])->middleware('agentstore.capability:offers.list')->name('offers');
+        Route::get('categories', [StoreInfoController::class, 'categories'])->middleware('agentstore.capability:categories.list')->name('categories');
+        Route::post('shipping/estimate', [StoreInfoController::class, 'shipping'])->middleware('agentstore.capability:shipping.estimate')->name('shipping.estimate');
+        Route::get('locations', [StoreInfoController::class, 'locations'])->middleware('agentstore.capability:locations.list')->name('locations');
 
         Route::post('customers/verify', [OrderController::class, 'verify'])->middleware('agentstore.capability:customers.verify')->name('customers.verify');
         Route::post('orders/lookup', [OrderController::class, 'lookup'])->middleware('agentstore.capability:orders.read')->name('orders.lookup');

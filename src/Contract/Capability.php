@@ -13,6 +13,9 @@ enum Capability: string
     case InventoryRead = 'inventory.read';
     case PricesRead = 'prices.read';
     case OffersList = 'offers.list';
+    case CategoriesList = 'categories.list';
+    case ShippingEstimate = 'shipping.estimate';
+    case LocationsList = 'locations.list';
     case CustomersVerify = 'customers.verify';
     case OrdersRead = 'orders.read';
     case OrdersList = 'orders.list';
@@ -36,6 +39,9 @@ enum Capability: string
             self::InventoryRead => 'inventory',
             self::PricesRead => 'pricing',
             self::OffersList => 'offers',
+            self::CategoriesList => 'categories',
+            self::ShippingEstimate => 'shipping',
+            self::LocationsList => 'locations',
             self::CustomersVerify => 'customers',
             self::OrdersRead, self::OrdersList => 'orders',
             self::OrdersQuote => 'order_quote',
