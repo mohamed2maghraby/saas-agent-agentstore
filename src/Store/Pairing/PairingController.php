@@ -2,6 +2,7 @@
 
 namespace SaasAgent\AgentStore\Store\Pairing;
 
+use Carbon\CarbonImmutable;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -13,7 +14,6 @@ use SaasAgent\AgentStore\AgentStore;
 use SaasAgent\AgentStore\Contract\Capability;
 use SaasAgent\AgentStore\Contract\ContractVersion;
 use SaasAgent\AgentStore\Store\Capabilities;
-use SaasAgent\AgentStore\Store\Models\Pairing;
 use Throwable;
 
 /**
@@ -29,6 +29,7 @@ final class PairingController
     public function __construct(
         private readonly SaasClient $saas,
         private readonly Capabilities $capabilities,
+        private readonly PendingPairings $pending,
     ) {}
 
     public function show(Request $request): View
@@ -52,16 +53,14 @@ final class PairingController
         $token = Str::random(64);
         $capabilities = $details['capabilities'];
 
-        $pairing = Pairing::query()->where('pairing_id', $pairingId)->first() ?? new Pairing;
-        $pairing->forceFill([
-            'pairing_id' => $pairingId,
-            'token_hash' => hash('sha256', $token),
-            'capabilities' => $capabilities,
-            'tenant_label' => $details['tenant'],
-            'approved_by' => $request->user()?->getAuthIdentifier(),
-            'expires_at' => $details['expires'],
-            'completed_at' => null,
-        ])->save();
+        $this->pending->put(new Pairing(
+            $pairingId,
+            hash('sha256', $token),
+            $capabilities,
+            $details['tenant'],
+            $request->user()?->getAuthIdentifier(),
+            CarbonImmutable::instance($details['expires']),
+        ));
 
         try {
             $this->saas->approve($pairingId, [
@@ -76,7 +75,7 @@ final class PairingController
             ]);
         } catch (Throwable $e) {
             report($e);
-            $pairing->delete();
+            $this->pending->forget($pairingId);
 
             return view('agentstore::connect', ['error' => __('agentstore::messages.approve_failed')]);
         }
@@ -117,7 +116,7 @@ final class PairingController
             return ['error' => __('agentstore::messages.saas_unreachable')];
         }
 
-        // In this app's timezone: the column keeps no offset, and the SaaS may run in another zone.
+        // In this app's timezone: the SaaS may run in another zone.
         $expires = rescue(fn () => Carbon::parse((string) ($data['expires_at'] ?? ''))->setTimezone(config('app.timezone')), null, false);
 
         if (! $expires || $expires->isPast()) {

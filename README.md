@@ -7,7 +7,10 @@ generic endpoint onto the store's data, and the SaaS cannot run queries or code
 on the store.
 
 - PHP 8.2+, Laravel 12 or 13.
-- Adds `agentstore_*` tables only. Touches nothing else in the store's schema.
+- Adds three `agentstore_*` tables only (connection, idempotency, outbox).
+  Touches nothing else in the store's schema. An approval waiting for the
+  SaaS is kept in the store's cache for its few minutes (`AGENTSTORE_CACHE_STORE`,
+  the default cache when empty; not `array`).
 
 ## Install
 
@@ -173,7 +176,7 @@ Every later request is HMAC-signed with a timestamp and a single-use nonce
 | `agentstore:install` | publish config, print the steps above |
 | `agentstore:doctor` | check config, migrations, adapters, gate, connection, outbox, SaaS reachability (`--offline` to skip the last); exits non-zero on failure |
 | `agentstore:deliver` | send pending outbox events (scheduled every minute) |
-| `agentstore:prune` | delete old idempotency, outbox and request records (scheduled daily) |
+| `agentstore:prune` | delete old idempotency and outbox records (scheduled daily) |
 | `agentstore:disconnect` | revoke the connection from the store side and notify the SaaS |
 
 Rotating credentials is started from the SaaS dashboard; the previous secrets

@@ -101,8 +101,10 @@ return [
         'retention_days' => 14,
     ],
 
-    // Days of request records kept for `agentstore:doctor` and auditing.
-    'request_log_retention_days' => 30,
+    // The cache that holds approvals until the SaaS completes them (minutes).
+    // Empty: the store's default cache. Must be shared by its web requests
+    // (file, database, redis…), not `array`.
+    'pairing_cache_store' => env('AGENTSTORE_CACHE_STORE'),
 
     'http' => [
         'timeout' => 10,

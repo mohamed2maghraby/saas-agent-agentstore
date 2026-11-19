@@ -11,7 +11,6 @@ use SaasAgent\AgentStore\Security\Credentials;
 use SaasAgent\AgentStore\Security\Signature;
 use SaasAgent\AgentStore\Store\Http\ApiError;
 use SaasAgent\AgentStore\Store\Models\Connection;
-use SaasAgent\AgentStore\Store\Models\Pairing;
 
 /**
  * The last step of pairing, called by the SaaS (ADR 0009).
@@ -23,6 +22,8 @@ use SaasAgent\AgentStore\Store\Models\Pairing;
  */
 final class VerifyPairingController
 {
+    public function __construct(private readonly PendingPairings $pending) {}
+
     public function __invoke(Request $request): JsonResponse
     {
         $data = json_decode($request->getContent() ?: '{}', true);
@@ -44,16 +45,19 @@ final class VerifyPairingController
             return ApiError::response(ErrorCode::ValidationFailed);
         }
 
-        return DB::transaction(function () use ($pairingId, $token, $credentials) {
-            $pairing = Pairing::query()->where('pairing_id', $pairingId)->lockForUpdate()->first();
+        if (! preg_match('/\A[0-9a-z]{26}\z/', $pairingId)) {
+            return ApiError::response(ErrorCode::Forbidden);
+        }
 
+        return $this->pending->using($pairingId, function (?Pairing $pairing) use ($pairingId, $token, $credentials) {
             // Unknown, expired, already used or wrong token: one answer for all of them.
-            if (! $pairing || ! $pairing->isOpen() || ! hash_equals($pairing->token_hash, hash('sha256', $token))) {
+            if (! $pairing || ! $pairing->isOpen() || ! hash_equals($pairing->tokenHash, hash('sha256', $token))) {
                 return ApiError::response(ErrorCode::Forbidden);
             }
 
-            Connection::establish($credentials, rtrim((string) config('agentstore.saas_url'), '/'), $pairing->tenant_label, $pairing->approved_by);
-            $pairing->forceFill(['completed_at' => now()])->save();
+            DB::transaction(fn () => Connection::establish($credentials, rtrim((string) config('agentstore.saas_url'), '/'), $pairing->tenantLabel, $pairing->approvedBy === null ? null : (int) $pairing->approvedBy));
+            // Single use.
+            $this->pending->forget($pairingId);
 
             return new JsonResponse(['data' => [
                 'proof' => Signature::proof($credentials->requestSecret, $pairingId, $credentials->keyId),

@@ -9,7 +9,6 @@ use SaasAgent\AgentStore\Contract\ProductPage;
 use SaasAgent\AgentStore\Contract\ProductQuery;
 use SaasAgent\AgentStore\Store\Adapters\ProductAdapterInterface;
 use SaasAgent\AgentStore\Store\Adapters\StoreCapabilityInterface;
-use SaasAgent\AgentStore\Store\Models\RequestRecord;
 use SaasAgent\AgentStore\Tests\TestCase;
 
 class ExplodingCatalog implements ProductAdapterInterface
@@ -82,19 +81,5 @@ class CapabilityAndErrorTest extends TestCase
         $this->signed('GET', '/agentstore/v1/products?limit=500')
             ->assertStatus(422)
             ->assertJsonPath('error.code', 'validation_failed');
-    }
-
-    public function test_calls_are_recorded_without_their_bodies(): void
-    {
-        $this->useAdapters([]);
-
-        $this->signed('POST', '/agentstore/v1/customers/verify', ['phone' => '01000000001'], override: ['X-Request-Id' => 'saas-trace-123456']);
-
-        $record = RequestRecord::query()->sole();
-        $this->assertSame('agentstore.customers.verify', $record->operation);
-        $this->assertSame(501, $record->status);
-        $this->assertSame('unsupported_capability', $record->error_code);
-        $this->assertSame('saas-trace-123456', $record->correlation_id);
-        $this->assertStringNotContainsString('01000000001', json_encode($record->toArray()));
     }
 }

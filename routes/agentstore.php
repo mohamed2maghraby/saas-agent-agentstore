@@ -6,7 +6,6 @@ use SaasAgent\AgentStore\Store\Http\Controllers\ConnectionController;
 use SaasAgent\AgentStore\Store\Http\Controllers\OrderController;
 use SaasAgent\AgentStore\Store\Http\Controllers\StatusController;
 use SaasAgent\AgentStore\Store\Http\Controllers\StoreInfoController;
-use SaasAgent\AgentStore\Store\Http\Middleware\RecordRequest;
 use SaasAgent\AgentStore\Store\Http\Middleware\VerifySignature;
 use SaasAgent\AgentStore\Store\Pairing\PairingController;
 use SaasAgent\AgentStore\Store\Pairing\VerifyPairingController;
@@ -32,7 +31,7 @@ Route::prefix(config('agentstore.routes.prefix', 'agentstore'))->name('agentstor
         ->middleware('throttle:agentstore-pairing')
         ->name('pairing.verify');
 
-    Route::prefix('v1')->middleware([VerifySignature::class, 'throttle:agentstore', RecordRequest::class])->group(function () {
+    Route::prefix('v1')->middleware([VerifySignature::class, 'throttle:agentstore'])->group(function () {
         Route::get('health', [StatusController::class, 'health'])->name('health');
         Route::get('capabilities', [StatusController::class, 'capabilities'])->name('capabilities');
 

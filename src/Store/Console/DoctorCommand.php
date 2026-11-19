@@ -46,7 +46,10 @@ final class DoctorCommand extends Command
             $base = null;
         }
 
-        $tables = ['agentstore_connections', 'agentstore_pairings', 'agentstore_idempotency', 'agentstore_outbox', 'agentstore_requests'];
+        $cacheStore = (string) (config('agentstore.pairing_cache_store') ?: config('cache.default'));
+        $this->check('Pairing cache is shared between requests', config("cache.stores.{$cacheStore}.driver") !== 'array', $cacheStore);
+
+        $tables = ['agentstore_connections', 'agentstore_idempotency', 'agentstore_outbox'];
         $missing = array_filter($tables, fn ($t) => ! Schema::hasTable($t));
         $this->check('Migrations have run', $missing === [], $missing ? 'missing: '.implode(', ', $missing) : '');
 

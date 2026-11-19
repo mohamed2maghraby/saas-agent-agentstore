@@ -18,10 +18,20 @@ class CommandsTest extends TestCase
     {
         $this->useAdapters(['products' => CatalogAdapter::class]);
         Gate::define('agentstore-approve', fn () => true);
+        config(['cache.default' => 'file']);
 
         $this->artisan('agentstore:doctor', ['--offline' => true])
             ->expectsOutputToContain('products.search')
             ->assertSuccessful();
+    }
+
+    public function test_doctor_fails_when_approvals_would_not_outlive_the_request(): void
+    {
+        $this->useAdapters(['products' => CatalogAdapter::class]);
+        Gate::define('agentstore-approve', fn () => true);
+        config(['cache.default' => 'array']);
+
+        $this->artisan('agentstore:doctor', ['--offline' => true])->assertFailed();
     }
 
     public function test_doctor_catches_an_adapter_that_does_not_implement_its_interface(): void

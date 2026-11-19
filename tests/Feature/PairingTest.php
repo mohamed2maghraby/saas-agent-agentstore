@@ -2,13 +2,15 @@
 
 namespace SaasAgent\AgentStore\Tests\Feature;
 
+use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Auth\User;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Http;
 use SaasAgent\AgentStore\Security\Credentials;
 use SaasAgent\AgentStore\Security\Signature;
 use SaasAgent\AgentStore\Store\Models\Connection;
-use SaasAgent\AgentStore\Store\Models\Pairing;
+use SaasAgent\AgentStore\Store\Pairing\Pairing;
+use SaasAgent\AgentStore\Store\Pairing\PendingPairings;
 use SaasAgent\AgentStore\Tests\Fixtures\StoreA\CatalogAdapter;
 use SaasAgent\AgentStore\Tests\TestCase;
 
@@ -86,7 +88,7 @@ class PairingTest extends TestCase
         $this->asApprover()->get('/agentstore/connect?pairing='.self::PAIRING)->assertOk()->assertSee(__('agentstore::messages.wrong_store'));
         $this->asApprover()->post('/agentstore/connect', ['pairing' => self::PAIRING]);
 
-        $this->assertSame(0, Pairing::query()->count());
+        $this->assertNull($this->pending()->find(self::PAIRING));
     }
 
     public function test_the_store_can_be_known_by_an_address_other_than_app_url(): void
@@ -116,9 +118,9 @@ class PairingTest extends TestCase
             $this->fakeSaas(['expires_at' => now('UTC')->addMinutes(10)->toAtomString()]);
             $this->asApprover()->post('/agentstore/connect', ['pairing' => self::PAIRING]);
 
-            $pairing = Pairing::query()->sole();
+            $pairing = $this->pending()->find(self::PAIRING);
             $this->assertTrue($pairing->isOpen(), 'The approval expired before it could be completed.');
-            $this->assertEqualsWithDelta(now()->addMinutes(10)->getTimestamp(), $pairing->expires_at->getTimestamp(), 60);
+            $this->assertEqualsWithDelta(now()->addMinutes(10)->getTimestamp(), $pairing->expiresAt->getTimestamp(), 60);
         } finally {
             date_default_timezone_set($zone);
         }
@@ -154,10 +156,10 @@ class PairingTest extends TestCase
             return false;
         });
 
-        $pairing = Pairing::query()->sole();
-        $this->assertSame(hash('sha256', $sent['approval_token']), $pairing->token_hash);
-        $this->assertNotSame($sent['approval_token'], $pairing->token_hash);
-        $this->assertSame(7, (int) $pairing->approved_by);
+        $pairing = $this->pending()->find(self::PAIRING);
+        $this->assertSame(hash('sha256', $sent['approval_token']), $pairing->tokenHash);
+        $this->assertNotSame($sent['approval_token'], $pairing->tokenHash);
+        $this->assertSame(7, (int) $pairing->approvedBy);
         // Only capabilities that were both requested and supported (none configured here).
         $this->assertSame([], $pairing->capabilities);
     }
@@ -183,8 +185,9 @@ class PairingTest extends TestCase
         // Encrypted at rest.
         $this->assertStringNotContainsString($credentials->requestSecret, (string) $connection->getRawOriginal('request_secret'));
 
-        // Single use.
+        // Single use: nothing of it is left.
         $this->postJson('/agentstore/v1/pairing/verify', $body)->assertForbidden();
+        $this->assertNull($this->pending()->find(self::PAIRING));
     }
 
     public function test_a_wrong_token_does_not_pair_and_does_not_burn_the_approval(): void
@@ -201,7 +204,7 @@ class PairingTest extends TestCase
     public function test_an_expired_approval_cannot_be_completed(): void
     {
         [$token, $credentials] = $this->pendingApproval();
-        Pairing::query()->update(['expires_at' => now()->subSecond()]);
+        $this->travel(11)->minutes();
 
         $this->postJson('/agentstore/v1/pairing/verify', ['pairing_id' => self::PAIRING, 'approval_token' => $token, 'key_id' => $credentials->keyId, 'request_secret' => $credentials->requestSecret, 'webhook_secret' => $credentials->webhookSecret])
             ->assertForbidden();
@@ -229,15 +232,13 @@ class PairingTest extends TestCase
     private function pendingApproval(): array
     {
         $token = str_repeat('t', 64);
-        $pairing = new Pairing;
-        $pairing->forceFill([
-            'pairing_id' => self::PAIRING,
-            'token_hash' => hash('sha256', $token),
-            'capabilities' => [],
-            'tenant_label' => 'Space Gift Shop',
-            'expires_at' => now()->addMinutes(10),
-        ])->save();
+        $this->pending()->put(new Pairing(self::PAIRING, hash('sha256', $token), [], 'Space Gift Shop', null, CarbonImmutable::now()->addMinutes(10)));
 
         return [$token, Credentials::generate()];
+    }
+
+    private function pending(): PendingPairings
+    {
+        return app(PendingPairings::class);
     }
 }
